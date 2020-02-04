@@ -38,4 +38,10 @@ library BytesLib {
             }
         }
     }
+
+    function asBool(bytes memory b) internal pure returns (bool x) {
+        if (asUint8(b) > 0) return true;
+
+        return false;
+    }
 }

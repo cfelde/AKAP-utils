@@ -41,4 +41,18 @@ contract("When doing conversions, it:", async accounts => {
 
         assert.equal("1234567890", x.toString(10));
     });
+
+    it("is possible to convert between bytes and bool", async () => {
+        let cu = await convertUtils.deployed();
+
+        let b1 = await cu.boolToBytes(true);
+        let x1 = await cu.bToBool(b1);
+
+        assert.isTrue(x1);
+
+        let b2 = await cu.boolToBytes(false);
+        let x2 = await cu.bToBool(b2);
+
+        assert.isFalse(x2);
+    });
 });

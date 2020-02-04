@@ -30,4 +30,8 @@ contract BytesUtils {
     function bToUint256(bytes memory b) public pure returns (uint256) {
         return b.asUint256();
     }
+
+    function bToBool(bytes memory b) public pure returns (bool) {
+        return b.asBool();
+    }
 }

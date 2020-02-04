@@ -14,10 +14,12 @@
 
 pragma solidity ^0.5.0;
 
-import "./BytesUtils.sol";
-import "./StringUtils.sol";
-import "./Uint8Utils.sol";
-import "./Uint256Utils.sol";
-import "./BoolUtils.sol";
+import "./BoolLib.sol";
 
-contract ConvertUtils is BytesUtils, StringUtils, Uint8Utils, Uint256Utils, BoolUtils {}
+contract BoolUtils {
+    using BoolLib for bool;
+
+    function boolToBytes(bool x) public pure returns (bytes memory) {
+        return x.asBytes();
+    }
+}
