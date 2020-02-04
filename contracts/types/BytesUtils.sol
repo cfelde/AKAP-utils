@@ -19,11 +19,15 @@ import "./BytesLib.sol";
 contract BytesUtils {
     using BytesLib for bytes;
 
-    function b2string(bytes memory b) public pure returns (string memory) {
+    function bToString(bytes memory b) public pure returns (string memory) {
         return b.asString();
     }
 
-    function b2uint256(bytes memory b) public pure returns (uint256) {
+    function bToUint8(bytes memory b) public pure returns (uint256) {
+        return b.asUint8();
+    }
+
+    function bToUint256(bytes memory b) public pure returns (uint256) {
         return b.asUint256();
     }
 }
