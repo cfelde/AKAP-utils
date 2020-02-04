@@ -27,6 +27,10 @@ contract BytesUtils {
         return b.asUint8();
     }
 
+    function bToUint160(bytes memory b) public pure returns (uint160) {
+        return b.asUint160();
+    }
+
     function bToUint256(bytes memory b) public pure returns (uint256) {
         return b.asUint256();
     }

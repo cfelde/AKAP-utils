@@ -16,9 +16,6 @@ pragma solidity ^0.5.0;
 
 library Uint256Lib {
     function asBytes(uint256 x) internal pure returns (bytes memory b) {
-        b = new bytes(0x20);
-        assembly {
-            mstore(add(b, 0x20), x)
-        }
+        return abi.encodePacked(x);
     }
 }

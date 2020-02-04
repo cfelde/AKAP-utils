@@ -29,6 +29,16 @@ library BytesLib {
         }
     }
 
+    function asUint160(bytes memory b) internal pure returns (uint160 x) {
+        if (b.length == 0) {
+            x = 0;
+        } else {
+            assembly {
+                x := mload(add(b, 0x14))
+            }
+        }
+    }
+
     function asUint256(bytes memory b) internal pure returns (uint256 x) {
         if (b.length == 0) {
             x = 0;

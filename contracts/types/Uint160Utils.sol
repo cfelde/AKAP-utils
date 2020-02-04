@@ -14,8 +14,12 @@
 
 pragma solidity ^0.5.0;
 
-library Uint8Lib {
-    function asBytes(uint8 x) internal pure returns (bytes memory b) {
-        return abi.encodePacked(x);
+import "./Uint160Lib.sol";
+
+contract Uint160Utils {
+    using Uint160Lib for uint160;
+
+    function uint160ToBytes(uint160 x) public pure returns (bytes memory) {
+        return x.asBytes();
     }
 }

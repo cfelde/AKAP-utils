@@ -17,7 +17,8 @@ pragma solidity ^0.5.0;
 import "./BytesUtils.sol";
 import "./StringUtils.sol";
 import "./Uint8Utils.sol";
+import "./Uint160Utils.sol";
 import "./Uint256Utils.sol";
 import "./BoolUtils.sol";
 
-contract ConvertUtils is BytesUtils, StringUtils, Uint8Utils, Uint256Utils, BoolUtils {}
+contract ConvertUtils is BytesUtils, StringUtils, Uint8Utils, Uint160Utils, Uint256Utils, BoolUtils {}

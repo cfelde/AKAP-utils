@@ -27,32 +27,83 @@ contract("When doing conversions, it:", async accounts => {
     it("is possible to convert between bytes and uint8", async () => {
         let cu = await convertUtils.deployed();
 
-        let b = await cu.uint8ToBytes(255);
-        let x = await cu.bToUint8(b);
+        let b0 = await cu.uint8ToBytes(web3.utils.toBN("0x0"));
+        let x0 = await cu.bToUint8(b0);
 
-        assert.equal("255", x.toString(10));
+        assert.equal(web3.utils.toBN("0x0").toString(10), x0.toString(10));
+        assert.equal("0x00".length, b0.length);
+
+        let b1 = await cu.uint8ToBytes(web3.utils.toBN("0xf"));
+        let x1 = await cu.bToUint8(b1);
+
+        assert.equal(web3.utils.toBN("0xf").toString(10), x1.toString(10));
+        assert.equal("0x0f".length, b1.length);
+
+        let b2 = await cu.uint8ToBytes(web3.utils.toBN("0xff"));
+        let x2 = await cu.bToUint8(b2);
+
+        assert.equal(web3.utils.toBN("0xff").toString(10), x2.toString(10));
+        assert.equal("0xff".length, b1.length);
     });
+
+    it("is possible to convert between bytes and uint160", async () => {
+        let cu = await convertUtils.deployed();
+
+        let b0 = await cu.uint160ToBytes(web3.utils.toBN("0x0"));
+        let x0 = await cu.bToUint160(b0);
+
+        assert.equal(web3.utils.toBN("0x0").toString(10), x0.toString(10));
+        assert.equal("0x0000000000000000000000000000000000000000".length, b0.length);
+
+        let b1 = await cu.uint160ToBytes(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffff"));
+        let x1 = await cu.bToUint160(b1);
+
+        assert.equal(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffff").toString(10), x1.toString(10));
+        assert.equal("0x00ffffffffffffffffffffffffffffffffffffff".length, b1.length);
+
+        let b2 = await cu.uint160ToBytes(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffff"));
+        let x2 = await cu.bToUint160(b2);
+
+        assert.equal(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffff").toString(10), x2.toString(10));
+        assert.equal("0xffffffffffffffffffffffffffffffffffffffff".length, b1.length);
+    });
+
 
     it("is possible to convert between bytes and uint256", async () => {
         let cu = await convertUtils.deployed();
 
-        let b = await cu.uint256ToBytes(1234567890);
-        let x = await cu.bToUint256(b);
+        let b0 = await cu.uint256ToBytes(web3.utils.toBN("0x0"));
+        let x0 = await cu.bToUint256(b0);
 
-        assert.equal("1234567890", x.toString(10));
+        assert.equal(web3.utils.toBN("0x0").toString(10), x0.toString(10));
+        assert.equal("0x0000000000000000000000000000000000000000000000000000000000000000".length, b0.length);
+
+        let b1 = await cu.uint256ToBytes(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        let x1 = await cu.bToUint256(b1);
+
+        assert.equal(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff").toString(10), x1.toString(10));
+        assert.equal("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".length, b1.length);
+
+        let b2 = await cu.uint256ToBytes(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        let x2 = await cu.bToUint256(b2);
+
+        assert.equal(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff").toString(10), x2.toString(10));
+        assert.equal("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".length, b1.length);
     });
 
     it("is possible to convert between bytes and bool", async () => {
         let cu = await convertUtils.deployed();
 
+        let b0 = await cu.boolToBytes(false);
+        let x0 = await cu.bToBool(b0);
+
+        assert.isFalse(x0);
+        assert.equal("0x00".length, b0.length);
+
         let b1 = await cu.boolToBytes(true);
         let x1 = await cu.bToBool(b1);
 
         assert.isTrue(x1);
-
-        let b2 = await cu.boolToBytes(false);
-        let x2 = await cu.bToBool(b2);
-
-        assert.isFalse(x2);
+        assert.equal("0x01".length, b1.length);
     });
 });
