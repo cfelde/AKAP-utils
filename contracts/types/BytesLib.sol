@@ -15,6 +15,22 @@
 pragma solidity ^0.5.0;
 
 library BytesLib {
+    function asAddress(bytes memory b) internal pure returns (address x) {
+        if (b.length == 0) {
+            x = address(0);
+        } else {
+            assembly {
+                x := mload(add(b, 0x14))
+            }
+        }
+    }
+
+    function asBool(bytes memory b) internal pure returns (bool x) {
+        if (asUint8(b) > 0) return true;
+
+        return false;
+    }
+
     function asString(bytes memory b) internal pure returns (string memory) {
         return string(b);
     }
@@ -47,11 +63,5 @@ library BytesLib {
                 x := mload(add(b, 0x20))
             }
         }
-    }
-
-    function asBool(bytes memory b) internal pure returns (bool x) {
-        if (asUint8(b) > 0) return true;
-
-        return false;
     }
 }

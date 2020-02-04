@@ -43,7 +43,7 @@ contract("When doing conversions, it:", async accounts => {
         let x2 = await cu.bToUint8(b2);
 
         assert.equal(web3.utils.toBN("0xff").toString(10), x2.toString(10));
-        assert.equal("0xff".length, b1.length);
+        assert.equal("0xff".length, b2.length);
     });
 
     it("is possible to convert between bytes and uint160", async () => {
@@ -65,7 +65,7 @@ contract("When doing conversions, it:", async accounts => {
         let x2 = await cu.bToUint160(b2);
 
         assert.equal(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffff").toString(10), x2.toString(10));
-        assert.equal("0xffffffffffffffffffffffffffffffffffffffff".length, b1.length);
+        assert.equal("0xffffffffffffffffffffffffffffffffffffffff".length, b2.length);
     });
 
 
@@ -88,7 +88,7 @@ contract("When doing conversions, it:", async accounts => {
         let x2 = await cu.bToUint256(b2);
 
         assert.equal(web3.utils.toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff").toString(10), x2.toString(10));
-        assert.equal("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".length, b1.length);
+        assert.equal("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".length, b2.length);
     });
 
     it("is possible to convert between bytes and bool", async () => {
@@ -105,5 +105,27 @@ contract("When doing conversions, it:", async accounts => {
 
         assert.isTrue(x1);
         assert.equal("0x01".length, b1.length);
+    });
+
+    it("is possible to convert between bytes and address", async () => {
+        let cu = await convertUtils.deployed();
+
+        let b0 = await cu.addressToBytes("0x0000000000000000000000000000000000000000");
+        let x0 = await cu.bToAddress(b0);
+
+        assert.equal("0x0000000000000000000000000000000000000000", x0);
+        assert.equal("0x0000000000000000000000000000000000000000".length, b0.length);
+
+        let b1 = await cu.addressToBytes(cu.address);
+        let x1 = await cu.bToAddress(b1);
+
+        assert.equal(cu.address, x1);
+        assert.equal(cu.address.length, b1.length);
+
+        let b2 = await cu.addressToBytes("0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF");
+        let x2 = await cu.bToAddress(b2);
+
+        assert.equal("0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF", x2);
+        assert.equal("0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF".length, b2.length);
     });
 });

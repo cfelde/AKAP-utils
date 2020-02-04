@@ -19,6 +19,14 @@ import "./BytesLib.sol";
 contract BytesUtils {
     using BytesLib for bytes;
 
+    function bToAddress(bytes memory b) public pure returns (address) {
+        return b.asAddress();
+    }
+
+    function bToBool(bytes memory b) public pure returns (bool) {
+        return b.asBool();
+    }
+
     function bToString(bytes memory b) public pure returns (string memory) {
         return b.asString();
     }
@@ -33,9 +41,5 @@ contract BytesUtils {
 
     function bToUint256(bytes memory b) public pure returns (uint256) {
         return b.asUint256();
-    }
-
-    function bToBool(bytes memory b) public pure returns (bool) {
-        return b.asBool();
     }
 }

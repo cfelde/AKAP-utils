@@ -14,12 +14,12 @@
 
 pragma solidity ^0.5.0;
 
-import "./AddressUtils.sol";
-import "./BoolUtils.sol";
-import "./BytesUtils.sol";
-import "./StringUtils.sol";
-import "./Uint8Utils.sol";
-import "./Uint160Utils.sol";
-import "./Uint256Utils.sol";
+import "./AddressLib.sol";
 
-contract ConvertUtils is AddressUtils, BoolUtils, BytesUtils, StringUtils, Uint8Utils, Uint160Utils, Uint256Utils {}
+contract AddressUtils {
+    using AddressLib for address;
+
+    function addressToBytes(address x) public pure returns (bytes memory) {
+        return x.asBytes();
+    }
+}
