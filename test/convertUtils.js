@@ -24,6 +24,15 @@ contract("When doing conversions, it:", async accounts => {
         assert.equal("Hello", s);
     });
 
+    it("is possible to convert between bytes and uint8", async () => {
+        let cu = await convertUtils.deployed();
+
+        let b = await cu.uint8ToBytes(255);
+        let x = await cu.bToUint8(b);
+
+        assert.equal("255", x.toString(10));
+    });
+
     it("is possible to convert between bytes and uint256", async () => {
         let cu = await convertUtils.deployed();
 
