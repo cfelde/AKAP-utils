@@ -8,4 +8,5 @@ While this is still work in progress check out [Using-AKAP](https://github.com/c
 ## Dependencies
 
 `npm install akap`
+
 `npm install @openzeppelin/test-helpers`
