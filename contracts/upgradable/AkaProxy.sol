@@ -24,12 +24,12 @@ contract AkaProxy {
         akap = IAKAP(_akapAddress);
         rootPtr = _rootPtr;
 
-        require(akap.exists(rootPtr), "AkaProxy: No implementationPointer");
+        require(akap.exists(rootPtr), "AkaProxy: No root node");
     }
 
     function () payable external {
         address implementationAddress = akap.seeAddress(rootPtr);
-        require(implementationAddress != address(0), "AkaProxy: No implementationAddress");
+        require(implementationAddress != address(0), "AkaProxy: No root node address");
 
         assembly {
             let ptr := mload(0x40)
