@@ -16,19 +16,18 @@ pragma solidity ^0.5.0;
 
 import "../domain/DomainManager.sol";
 import "../types/StringLib.sol";
+import "../types/Uint256Lib.sol";
 
 contract ForTestA {
     using StringLib for string;
+    using Uint256Lib for uint;
 
+    // These are set in the proxy and are
+    // only here to maintain contract storage structure
     DomainManager public dm;
     uint public rootPtr;
 
-    constructor(address _dmAddress, uint _rootPtr) public {
-        dm = DomainManager(_dmAddress);
-        rootPtr = _rootPtr;
-
-        require(dm.akap().exists(rootPtr), "ForTestA: No root node");
-    }
+    constructor() public {}
 
     function value1() external pure returns (uint) {
         return 1;
@@ -38,5 +37,17 @@ contract ForTestA {
         string memory key = "k1";
         uint valuePtr = dm.akap().hashOf(rootPtr, key.asBytes());
         return dm.akap().nodeBody(valuePtr);
+    }
+
+    function action1() external {
+        string memory key = "k2";
+        uint valuePtr = dm.akap().hashOf(rootPtr, key.asBytes());
+
+        if (!dm.akap().exists(valuePtr)) {
+            require(dm.claim(rootPtr, key.asBytes()) > 0, "ForTestA: Unable to claim");
+        }
+
+        uint value = 111;
+        dm.akap().setNodeBody(valuePtr, value.asBytes());
     }
 }

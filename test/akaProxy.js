@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const {expectRevert} = require('@openzeppelin/test-helpers');
 const domainManager = artifacts.require("DomainManager");
 const akap = artifacts.require("IAKAP");
 const convertUtils = artifacts.require("ConvertUtils");
@@ -40,8 +41,8 @@ contract("When using a contract proxy:", async accounts => {
         await registry.setNodeBody(eternalNode, [0x01, 0x02, 0x03]);
 
         // Deploy our two implementations, sharing same rootPtr
-        let instanceA = await forTestA.new(dm.address, rootPtr);
-        let instanceB = await forTestB.new(dm.address, rootPtr);
+        let instanceA = await forTestA.deployed();
+        let instanceB = await forTestB.deployed();
 
         // Set instanceA on rootPtr
         await registry.setSeeAddress(rootPtr, instanceA.address);
@@ -61,5 +62,46 @@ contract("When using a contract proxy:", async accounts => {
 
         assert.equal(2, await contract.value1());
         assert.equal("0x010203", await contract.value2());
+    });
+
+    it("it is possible for the implementation to write to eternal storage", async () => {
+        let dm = await domainManager.deployed();
+        let registry = await akap.at(await dm.akap());
+        let cu = await convertUtils.deployed();
+
+        // Our proxy will reuse the rootPtr as is from previous test
+        let rootPtr = await registry.hashOf(await dm.domain(), [0x61, 0x6b, 0x61]);
+        let proxyInstance = await akaProxy.new(dm.address, rootPtr);
+
+        // As is from previous test, contract points to instanceB
+        let contract = await forTestA.at(proxyInstance.address);
+
+        assert.equal(2, await contract.value1());
+        assert.equal("0x010203", await contract.value2());
+
+        // We do not expect the value pointer to exist yet..
+        let key = await cu.sToBytes("k2");
+        let valuePtr = await registry.hashOf(rootPtr, key);
+        assert.isFalse(await registry.exists(valuePtr));
+
+        // We do not expect the contract to have access to write yet..
+        await expectRevert(contract.action1(), "DomainManager: Not approved for all");
+        assert.isFalse(await registry.exists(valuePtr));
+
+        // We will need to grant write access to the contract/proxy
+        await dm.setApprovalForAll(contract.address, true);
+
+        // Call action1 on instanceB
+        await contract.action1();
+        assert.isTrue(await registry.exists(valuePtr));
+        let valueA = await cu.bToUint256(await registry.nodeBody(valuePtr));
+        assert.equal("222", valueA.toString(10));
+
+        // Swap to ForTestA and call action1 again using same proxy
+        await registry.setSeeAddress(rootPtr, (await forTestA.deployed()).address);
+        await contract.action1();
+
+        let valueB = await cu.bToUint256(await registry.nodeBody(valuePtr));
+        assert.equal("111", valueB.toString(10));
     });
 });

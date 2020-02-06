@@ -14,6 +14,8 @@
 
 const convertUtils = artifacts.require("ConvertUtils");
 const domainManager = artifacts.require("DomainManager");
+const forTestA = artifacts.require("ForTestA");
+const forTestB = artifacts.require("ForTestB");
 
 function akapAddress(network) {
     let officialAddress = "0xaacCAAB0E85b1EfCEcdBA88F4399fa6CAb402349";
@@ -32,4 +34,6 @@ function akapAddress(network) {
 module.exports = function(deployer, network, accounts) {
     deployer.deploy(convertUtils);
     deployer.deploy(domainManager, akapAddress(network), [0x0], web3.utils.toHex(new Date().getTime()))
+    deployer.deploy(forTestA);
+    deployer.deploy(forTestB);
 };
