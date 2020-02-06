@@ -14,20 +14,20 @@
 
 pragma solidity ^0.5.0;
 
-import "akap/contracts/IAKAP.sol";
+import "../domain/DomainManager.sol";
 import "../types/StringLib.sol";
 
 contract ForTestB {
     using StringLib for string;
 
-    IAKAP public akap;
+    DomainManager public dm;
     uint public rootPtr;
 
-    constructor(address _akapAddress, uint _rootPtr) public {
-        akap = IAKAP(_akapAddress);
+    constructor(address _dmAddress, uint _rootPtr) public {
+        dm = DomainManager(_dmAddress);
         rootPtr = _rootPtr;
 
-        require(akap.exists(rootPtr), "ForTestB: No implementationPointer");
+        require(dm.akap().exists(rootPtr), "ForTestB: No root node");
     }
 
     function value1() external pure returns (uint) {
@@ -36,7 +36,7 @@ contract ForTestB {
 
     function value2() external view returns (bytes memory) {
         string memory key = "k1";
-        uint valuePtr = akap.hashOf(rootPtr, key.asBytes());
-        return akap.nodeBody(valuePtr);
+        uint valuePtr = dm.akap().hashOf(rootPtr, key.asBytes());
+        return dm.akap().nodeBody(valuePtr);
     }
 }

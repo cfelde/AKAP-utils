@@ -40,14 +40,14 @@ contract("When using a contract proxy:", async accounts => {
         await registry.setNodeBody(eternalNode, [0x01, 0x02, 0x03]);
 
         // Deploy our two implementations, sharing same rootPtr
-        let instanceA = await forTestA.new(registry.address, rootPtr);
-        let instanceB = await forTestB.new(registry.address, rootPtr);
+        let instanceA = await forTestA.new(dm.address, rootPtr);
+        let instanceB = await forTestB.new(dm.address, rootPtr);
 
         // Set instanceA on rootPtr
         await registry.setSeeAddress(rootPtr, instanceA.address);
 
         // Deploy contract proxy
-        let proxyInstance = await akaProxy.new(registry.address, rootPtr);
+        let proxyInstance = await akaProxy.new(dm.address, rootPtr);
 
         // Contract looks like a ForTestA, but we're using the proxy address
         let contract = await forTestA.at(proxyInstance.address);
