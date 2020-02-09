@@ -61,17 +61,22 @@ contract LinkedHashMap {
         dm.akap().setSeeAlso(headPtr, newHead);
     }
 
-    function setTail(uint newHead) internal {
+    function setTail(uint newTail) internal {
         if (!haveTail) {
             require(dm.akap().claim(rootPtr, bytes("tail")) > 0, "LinkedHashMap: Unable to claim tail");
             haveTail = true;
         }
-        dm.akap().setSeeAlso(tailPtr, newHead);
+        dm.akap().setSeeAlso(tailPtr, newTail);
     }
 
     function setNext(uint keyPtr, uint nextPtr) internal {
         (bytes memory value, uint prev,) = decode(dm.akap().nodeBody(keyPtr));
         dm.akap().setNodeBody(keyPtr, encode(value, prev, nextPtr));
+    }
+
+    function setPrev(uint keyPtr, uint prevPtr) internal {
+        (bytes memory value,, uint next) = decode(dm.akap().nodeBody(keyPtr));
+        dm.akap().setNodeBody(keyPtr, encode(value, prevPtr, next));
     }
 
     function encode(bytes memory value, uint prev, uint next) public pure returns (bytes memory entry) {
@@ -92,27 +97,35 @@ contract LinkedHashMap {
         return (entry, prev, next);
     }
 
-    function getByRef(uint ref) public view returns (bytes memory value, uint prev, uint next, uint) {
-        if (!dm.akap().exists(ref)) return ("", 0, 0, ref);
+    function getByRef(uint ref) public view returns (bytes memory value, uint prev, uint next, uint, bool present) {
+        if (!dm.akap().exists(ref)) return ("", 0, 0, ref, false);
 
         bytes memory entry = dm.akap().nodeBody(ref);
-        if (entry.length == 0) return ("", 0, 0, ref);
+        if (entry.length == 0) return ("", 0, 0, ref, false);
 
         (value, prev, next) = decode(entry);
-        return (value, prev, next, ref);
+        return (value, prev, next, ref, true);
     }
 
-    function get(bytes memory key) public view returns (bytes memory value, uint prev, uint next, uint ref) {
+    function get(bytes memory key) public view returns (bytes memory value, uint prev, uint next, uint ref, bool present) {
         return getByRef(dm.akap().hashOf(bodyPtr, key));
     }
 
-    function put(bytes memory key, bytes memory newValue) public returns (bytes memory oldValue, uint prev, uint next, uint ref) {
+    function existsByRef(uint ref) public view returns (bool present) {
+        (,,,, present) = getByRef(ref);
+    }
+
+    function exists(bytes memory key) public view returns (bool) {
+        return existsByRef(dm.akap().hashOf(bodyPtr, key));
+    }
+
+    function put(bytes memory key, bytes memory newValue) public returns (bytes memory oldValue, uint prev, uint next, uint ref, bool present) {
         if (!haveBody) {
             require(dm.akap().claim(rootPtr, bytes("body")) > 0, "LinkedHashMap: Unable to claim body");
             haveBody = true;
         }
 
-        (oldValue, prev, next, ref) = get(key);
+        (oldValue, prev, next, ref, present) = get(key);
 
         if (prev == 0 && next == 0) {
             // New entry
@@ -144,5 +157,37 @@ contract LinkedHashMap {
         }
     }
 
-    // TODO exists, remove, isEmpty
+    function remove(bytes memory key) public returns (bytes memory oldValue, uint prev, uint next, uint ref, bool present) {
+        if (!haveBody) {
+            require(dm.akap().claim(rootPtr, bytes("body")) > 0, "LinkedHashMap: Unable to claim body");
+            haveBody = true;
+        }
+
+        (oldValue, prev, next, ref, present) = get(key);
+
+        if (present) {
+            if (prev != 0) {
+                // Link next on prev to next on this entry
+                setNext(prev, next);
+            } else {
+                // New first entry
+                setHead(next);
+            }
+
+            if (next != 0) {
+                // Link prev on next to prev on this entry
+                setPrev(next, prev);
+            } else {
+                // New last entry
+                setTail(prev);
+            }
+
+            // Clear this entry
+            dm.akap().setNodeBody(ref, "");
+        }
+    }
+
+    function isEmpty() public view returns (bool) {
+        return head() == 0;
+    }
 }

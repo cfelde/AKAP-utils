@@ -67,27 +67,33 @@ contract("When using a linked hash map:", async accounts => {
 
         // We haven't yet given the map contract write access
         // We expect this next put request to fail
+        assert.isTrue(await mapInstance.isEmpty());
         await expectRevert(mapInstance.put(await cu.sToBytes("FAIL"), await cu.sToBytes("FAIL")), "LinkedHashMap: Unable to claim body");
+        assert.isTrue(await mapInstance.isEmpty());
         assert.equal("0", (await mapInstance.head()).toString(16));
         assert.equal("0", (await mapInstance.tail()).toString(16));
 
         let entry0 = await mapInstance.get(await cu.sToBytes("FAIL"));
-        assert.isNull(entry0.value)
+        assert.isNull(entry0.value);
         assert.equal("0", entry0.prev.toString(16));
         assert.equal("0", entry0.next.toString(16));
+        assert.isFalse(await mapInstance.exists(await cu.sToBytes("FAIL")));
 
         // Give map write access
         dm.setApprovalForAll(mapInstance.address, true);
 
         // Test case:
         // First entry, new map: prev and next should be zero. Head and tail should be ref.
+        assert.isFalse(await mapInstance.exists(await cu.sToBytes("key1")));
         await mapInstance.put(await cu.sToBytes("key1"), await cu.sToBytes("value A"));
         let entry1 = await mapInstance.get(await cu.sToBytes("key1"));
+        assert.isFalse(await mapInstance.isEmpty());
         assert.equal("value A", await cu.bToString(entry1.value));
         assert.equal("0", entry1.prev.toString(16));
         assert.equal("0", entry1.next.toString(16));
         assert.equal(entry1.ref.toString(16), (await mapInstance.head()).toString(16));
         assert.equal(entry1.ref.toString(16), (await mapInstance.tail()).toString(16));
+        assert.isTrue(await mapInstance.exists(await cu.sToBytes("key1")));
 
         // Test case:
         // Only one entry, update entry: prev and next should remain as zero. Head and tail are still ref.
@@ -144,7 +150,7 @@ contract("When using a linked hash map:", async accounts => {
             }
             entryCount++;
             ref = entry.next;
-        } while (ref.toString(10) !== "0");
+        } while (ref.toString(16) !== "0");
 
         ref = await mapInstance.tail();
         entryCount = 0;
@@ -165,6 +171,125 @@ contract("When using a linked hash map:", async accounts => {
             }
             entryCount++;
             ref = entry.prev;
-        } while (ref.toString(10) !== "0");
+        } while (ref.toString(16) !== "0");
+    });
+
+    it("it is possible to remove entries", async () => {
+        let dm = await domainManager.deployed();
+        let registry = await akap.at(await dm.akap());
+        let cu = await convertUtils.deployed();
+
+        let rootPtr = await registry.hashOf(await dm.domain(), [0x6d, 0x61, 0x70]);
+        let mapInstance = await linkedHashMap.at(await registry.seeAddress(rootPtr));
+
+        // Test case:
+        // Removing an entry will link next and prev of neighboring entries.
+        // It will remove the node body data of the removed entry.
+        // It will not impact head or tail
+        assert.isTrue(await mapInstance.exists(await cu.sToBytes("key2")));
+        let entry1 = await mapInstance.get(await cu.sToBytes("key2"));
+        assert.isNotNull(await registry.nodeBody(entry1.ref));
+
+        let headRef = await mapInstance.head();
+        let tailRef = await mapInstance.tail();
+
+        await mapInstance.remove(await cu.sToBytes("key2"));
+        assert.isFalse(await mapInstance.isEmpty());
+        assert.isFalse(await mapInstance.exists(await cu.sToBytes("key2")));
+        assert.isNull(await registry.nodeBody(entry1.ref));
+
+        assert.equal(headRef.toString(16), (await mapInstance.head()).toString(16));
+        assert.equal(tailRef.toString(16), (await mapInstance.tail()).toString(16));
+
+        let ref = await mapInstance.head();
+        let entryCount = 0;
+        do {
+            let entry = await mapInstance.getByRef(ref);
+            switch (entryCount) {
+                case 0:
+                    assert.equal("value B", await cu.bToString(entry.value));
+                    break;
+                case 1:
+                    assert.equal("value D", await cu.bToString(entry.value));
+                    break;
+                default:
+                    assert.isTrue(false);
+            }
+            entryCount++;
+            ref = entry.next;
+        } while (ref.toString(16) !== "0");
+
+        ref = await mapInstance.tail();
+        entryCount = 0;
+        do {
+            let entry = await mapInstance.getByRef(ref);
+            switch (entryCount) {
+                case 0:
+                    assert.equal("value D", await cu.bToString(entry.value));
+                    break;
+                case 1:
+                    assert.equal("value B", await cu.bToString(entry.value));
+                    break;
+                default:
+                    assert.isTrue(false);
+            }
+            entryCount++;
+            ref = entry.prev;
+        } while (ref.toString(16) !== "0");
+
+        // Test case:
+        // Remove last entry. Last entry should be cleared, tail ref updated and prev entry next ref updated.
+        assert.isTrue(await mapInstance.exists(await cu.sToBytes("key3")));
+        let entry2 = await mapInstance.get(await cu.sToBytes("key3"));
+        assert.isNotNull(await registry.nodeBody(entry2.ref));
+
+        headRef = await mapInstance.head();
+        tailRef = await mapInstance.tail();
+
+        await mapInstance.remove(await cu.sToBytes("key3"));
+        assert.isFalse(await mapInstance.isEmpty());
+        assert.isFalse(await mapInstance.exists(await cu.sToBytes("key3")));
+        assert.isNull(await registry.nodeBody(entry2.ref));
+
+        assert.equal(headRef.toString(16), (await mapInstance.head()).toString(16));
+        assert.notEqual(tailRef.toString(16), (await mapInstance.tail()).toString(16));
+        assert.equal(entry2.prev.toString(16), (await mapInstance.tail()).toString(16));
+        assert.equal((await mapInstance.head()).toString(16), (await mapInstance.tail()).toString(16));
+
+        let entry3 = await mapInstance.get(await cu.sToBytes("key1"));
+        assert.equal("0", entry3.prev.toString(16));
+        assert.equal("0", entry3.next.toString(16));
+
+        // Test case:
+        // Remove first entry. First entry should be cleared, head ref updated and next entry prev ref updated.
+        await mapInstance.put(await cu.sToBytes("key3"), await cu.sToBytes("value D"));
+        assert.isTrue(await mapInstance.exists(await cu.sToBytes("key1")));
+        let entry4 = await mapInstance.get(await cu.sToBytes("key1"));
+        assert.isNotNull(await registry.nodeBody(entry4.ref));
+
+        headRef = await mapInstance.head();
+        tailRef = await mapInstance.tail();
+
+        await mapInstance.remove(await cu.sToBytes("key1"));
+        assert.isFalse(await mapInstance.isEmpty());
+        assert.isFalse(await mapInstance.exists(await cu.sToBytes("key1")));
+        assert.isNull(await registry.nodeBody(entry4.ref));
+
+        assert.notEqual(headRef.toString(16), (await mapInstance.head()).toString(16));
+        assert.equal(entry4.next.toString(16), (await mapInstance.head()).toString(16));
+        assert.equal(tailRef.toString(16), (await mapInstance.tail()).toString(16));
+        assert.equal((await mapInstance.head()).toString(16), (await mapInstance.tail()).toString(16));
+
+        let entry5 = await mapInstance.get(await cu.sToBytes("key3"));
+        assert.equal("0", entry5.prev.toString(16));
+        assert.equal("0", entry5.next.toString(16));
+
+        // Test case:
+        // Remove only entry. Entry should be cleared, head and tail ref updated to zero. Map is empty.
+        assert.isFalse(await mapInstance.isEmpty());
+        await mapInstance.remove(await cu.sToBytes("key3"));
+        assert.isTrue(await mapInstance.isEmpty());
+        assert.equal("0", (await mapInstance.head()).toString(16));
+        assert.equal("0", (await mapInstance.tail()).toString(16));
     });
 });
