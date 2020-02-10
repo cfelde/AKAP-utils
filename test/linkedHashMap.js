@@ -80,7 +80,7 @@ contract("When using a linked hash map:", async accounts => {
         assert.isFalse(await mapInstance.exists(await cu.sToBytes("FAIL")));
 
         // Give map write access
-        dm.setApprovalForAll(mapInstance.address, true);
+        await dm.setApprovalForAll(mapInstance.address, true);
 
         // Test case:
         // First entry, new map: prev and next should be zero. Head and tail should be ref.
@@ -304,5 +304,29 @@ contract("When using a linked hash map:", async accounts => {
         assert.equal("0", (await mapInstance.tail()).toString(16));
 
         //console.log("\tGas used: " + gasUsed);
+    });
+
+    it("only approved accounts can make changes", async () => {
+        let dm = await domainManager.deployed();
+        let registry = await akap.at(await dm.akap());
+        let cu = await convertUtils.deployed();
+
+        let rootPtr = await registry.hashOf(await dm.domain(), [0x6d, 0x61, 0x70]);
+        let mapInstance = await linkedHashMap.at(await registry.seeAddress(rootPtr));
+
+        // We haven't approved accounts[1] yet so this will fail
+        await expectRevert(mapInstance.put(await cu.sToBytes("key4"), await cu.sToBytes("value E"), {from: accounts[1]}), "LinkedHashMap: Not approved for all");
+        assert.isFalse(await mapInstance.exists(await cu.sToBytes("key4")));
+
+        await expectRevert(mapInstance.remove(await cu.sToBytes("key4"), {from: accounts[1]}), "LinkedHashMap: Not approved for all");
+
+        // Approve accounts[1]
+        await dm.setApprovalForAll(accounts[1], true);
+
+        await mapInstance.put(await cu.sToBytes("key4"), await cu.sToBytes("value E"), {from: accounts[1]})
+        assert.isTrue(await mapInstance.exists(await cu.sToBytes("key4")));
+
+        mapInstance.remove(await cu.sToBytes("key4"), {from: accounts[1]});
+        assert.isFalse(await mapInstance.exists(await cu.sToBytes("key4")));
     });
 });

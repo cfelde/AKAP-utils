@@ -16,10 +16,12 @@ pragma solidity ^0.5.0;
 
 import "../domain/DomainManager.sol";
 import "akap/contracts/IAKAP.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract LinkedHashMap {
     DomainManager public dm;
     IAKAP public akap;
+    IERC721 public erc721;
 
     uint public rootPtr;
     uint public bodyPtr;
@@ -33,12 +35,19 @@ contract LinkedHashMap {
     constructor(address _dmAddress, uint _rootPtr) public {
         dm = DomainManager(_dmAddress);
         akap = dm.akap();
+        erc721 = IERC721(address(akap));
         rootPtr = _rootPtr;
 
         require(akap.exists(rootPtr), "LinkedHashMap: No root node");
         bodyPtr = akap.hashOf(rootPtr, bytes("body"));
         headPtr = akap.hashOf(rootPtr, bytes("head"));
         tailPtr = akap.hashOf(rootPtr, bytes("tail"));
+    }
+
+    modifier onlyApproved() {
+        require(erc721.isApprovedForAll(address(dm), msg.sender), "LinkedHashMap: Not approved for all");
+
+        _;
     }
 
     function ptr(uint ref) internal view returns (uint) {
@@ -124,7 +133,7 @@ contract LinkedHashMap {
         return existsByRef(akap.hashOf(bodyPtr, key));
     }
 
-    function put(bytes memory key, bytes memory newValue) public returns (bytes memory oldValue, uint prev, uint next, uint ref, bool present) {
+    function put(bytes memory key, bytes memory newValue) public onlyApproved() returns (bytes memory oldValue, uint prev, uint next, uint ref, bool present) {
         if (!haveBody) {
             require(dm.claim(rootPtr, bytes("body")) > 0, "LinkedHashMap: Unable to claim body");
             haveBody = true;
@@ -162,7 +171,7 @@ contract LinkedHashMap {
         }
     }
 
-    function remove(bytes memory key) public returns (bytes memory oldValue, uint prev, uint next, uint ref, bool present) {
+    function remove(bytes memory key) public onlyApproved() returns (bytes memory oldValue, uint prev, uint next, uint ref, bool present) {
         if (!haveBody) {
             require(dm.claim(rootPtr, bytes("body")) > 0, "LinkedHashMap: Unable to claim body");
             haveBody = true;
