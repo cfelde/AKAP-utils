@@ -68,7 +68,7 @@ contract("When using a linked hash map:", async accounts => {
         // We haven't yet given the map contract write access
         // We expect this next put request to fail
         assert.isTrue(await mapInstance.isEmpty());
-        await expectRevert(mapInstance.put(await cu.sToBytes("FAIL"), await cu.sToBytes("FAIL")), "LinkedHashMap: Unable to claim body");
+        await expectRevert(mapInstance.put(await cu.sToBytes("FAIL"), await cu.sToBytes("FAIL")), "DomainManager: Not approved for all");
         assert.isTrue(await mapInstance.isEmpty());
         assert.equal("0", (await mapInstance.head()).toString(16));
         assert.equal("0", (await mapInstance.tail()).toString(16));
@@ -85,7 +85,8 @@ contract("When using a linked hash map:", async accounts => {
         // Test case:
         // First entry, new map: prev and next should be zero. Head and tail should be ref.
         assert.isFalse(await mapInstance.exists(await cu.sToBytes("key1")));
-        await mapInstance.put(await cu.sToBytes("key1"), await cu.sToBytes("value A"));
+        let tx = await mapInstance.put(await cu.sToBytes("key1"), await cu.sToBytes("value A"));
+        let gasUsed = tx.receipt.gasUsed;
         let entry1 = await mapInstance.get(await cu.sToBytes("key1"));
         assert.isFalse(await mapInstance.isEmpty());
         assert.equal("value A", await cu.bToString(entry1.value));
@@ -97,7 +98,8 @@ contract("When using a linked hash map:", async accounts => {
 
         // Test case:
         // Only one entry, update entry: prev and next should remain as zero. Head and tail are still ref.
-        await mapInstance.put(await cu.sToBytes("key1"), await cu.sToBytes("value B"));
+        tx = await mapInstance.put(await cu.sToBytes("key1"), await cu.sToBytes("value B"));
+        gasUsed += tx.receipt.gasUsed;
         let entry2 = await mapInstance.get(await cu.sToBytes("key1"));
         assert.equal("value B", await cu.bToString(entry2.value));
         assert.equal("0", entry2.prev.toString(16));
@@ -108,7 +110,8 @@ contract("When using a linked hash map:", async accounts => {
         // Test case:
         // Second entry: prev should point to first entry, first entry should have next updated to ref of second entry.
         // Head is unchanged but tail points to new entry. Second entry should have zero next ref.
-        await mapInstance.put(await cu.sToBytes("key2"), await cu.sToBytes("value C"));
+        tx = await mapInstance.put(await cu.sToBytes("key2"), await cu.sToBytes("value C"));
+        gasUsed += tx.receipt.gasUsed;
         let entry3 = await mapInstance.get(await cu.sToBytes("key2"));
         assert.equal("value C", await cu.bToString(entry3.value));
         assert.equal(entry2.ref.toString(16), entry3.prev.toString(16));
@@ -123,7 +126,8 @@ contract("When using a linked hash map:", async accounts => {
 
         // Test case:
         // Add in third entry and verify that we can traverse the sequence from head to tail and back with expected values.
-        await mapInstance.put(await cu.sToBytes("key3"), await cu.sToBytes("value D"));
+        tx  = await mapInstance.put(await cu.sToBytes("key3"), await cu.sToBytes("value D"));
+        gasUsed += tx.receipt.gasUsed;
         let entry5 = await mapInstance.get(await cu.sToBytes("key3"));
         assert.equal("value D", await cu.bToString(entry5.value));
         assert.equal(entry3.ref.toString(16), entry5.prev.toString(16));
@@ -172,6 +176,8 @@ contract("When using a linked hash map:", async accounts => {
             entryCount++;
             ref = entry.prev;
         } while (ref.toString(16) !== "0");
+
+        //console.log("\tGas used: " + gasUsed);
     });
 
     it("it is possible to remove entries", async () => {
@@ -193,7 +199,8 @@ contract("When using a linked hash map:", async accounts => {
         let headRef = await mapInstance.head();
         let tailRef = await mapInstance.tail();
 
-        await mapInstance.remove(await cu.sToBytes("key2"));
+        let tx = await mapInstance.remove(await cu.sToBytes("key2"));
+        let gasUsed = tx.receipt.gasUsed;
         assert.isFalse(await mapInstance.isEmpty());
         assert.isFalse(await mapInstance.exists(await cu.sToBytes("key2")));
         assert.isNull(await registry.nodeBody(entry1.ref));
@@ -246,7 +253,8 @@ contract("When using a linked hash map:", async accounts => {
         headRef = await mapInstance.head();
         tailRef = await mapInstance.tail();
 
-        await mapInstance.remove(await cu.sToBytes("key3"));
+        tx = await mapInstance.remove(await cu.sToBytes("key3"));
+        gasUsed += tx.receipt.gasUsed;
         assert.isFalse(await mapInstance.isEmpty());
         assert.isFalse(await mapInstance.exists(await cu.sToBytes("key3")));
         assert.isNull(await registry.nodeBody(entry2.ref));
@@ -262,7 +270,8 @@ contract("When using a linked hash map:", async accounts => {
 
         // Test case:
         // Remove first entry. First entry should be cleared, head ref updated and next entry prev ref updated.
-        await mapInstance.put(await cu.sToBytes("key3"), await cu.sToBytes("value D"));
+        tx = await mapInstance.put(await cu.sToBytes("key3"), await cu.sToBytes("value D"));
+        gasUsed += tx.receipt.gasUsed;
         assert.isTrue(await mapInstance.exists(await cu.sToBytes("key1")));
         let entry4 = await mapInstance.get(await cu.sToBytes("key1"));
         assert.isNotNull(await registry.nodeBody(entry4.ref));
@@ -270,7 +279,8 @@ contract("When using a linked hash map:", async accounts => {
         headRef = await mapInstance.head();
         tailRef = await mapInstance.tail();
 
-        await mapInstance.remove(await cu.sToBytes("key1"));
+        tx = await mapInstance.remove(await cu.sToBytes("key1"));
+        gasUsed += tx.receipt.gasUsed;
         assert.isFalse(await mapInstance.isEmpty());
         assert.isFalse(await mapInstance.exists(await cu.sToBytes("key1")));
         assert.isNull(await registry.nodeBody(entry4.ref));
@@ -287,9 +297,12 @@ contract("When using a linked hash map:", async accounts => {
         // Test case:
         // Remove only entry. Entry should be cleared, head and tail ref updated to zero. Map is empty.
         assert.isFalse(await mapInstance.isEmpty());
-        await mapInstance.remove(await cu.sToBytes("key3"));
+        tx = await mapInstance.remove(await cu.sToBytes("key3"));
+        gasUsed += tx.receipt.gasUsed;
         assert.isTrue(await mapInstance.isEmpty());
         assert.equal("0", (await mapInstance.head()).toString(16));
         assert.equal("0", (await mapInstance.tail()).toString(16));
+
+        //console.log("\tGas used: " + gasUsed);
     });
 });
