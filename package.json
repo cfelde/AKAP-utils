@@ -1,0 +1,34 @@
+{
+  "name": "akap-utils",
+  "version": "0.9.0",
+  "description": "AKAP utils, for all your eternal storage",
+  "files": [
+    "/contracts/**/*.sol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cfelde/AKAP-utils.git"
+  },
+  "keywords": [
+    "solidity",
+    "solidity-contracts",
+    "solidity-dapps",
+    "ethereum",
+    "ethereum-contract",
+    "ethereum-dapp",
+    "AKAP"
+  ],
+  "author": "Christian Felde",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/cfelde/AKAP-utils/issues"
+  },
+  "homepage": "https://akap.me",
+  "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "2.3.0",
+    "akap": "1.0.1"
+  }
+}
