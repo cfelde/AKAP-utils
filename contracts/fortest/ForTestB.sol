@@ -14,6 +14,7 @@
 
 pragma solidity ^0.5.0;
 
+import "akap/contracts/IAKAP.sol";
 import "../domain/DomainManager.sol";
 import "../types/StringLib.sol";
 import "../types/Uint256Lib.sol";
@@ -25,6 +26,7 @@ contract ForTestB {
     // These are set in the proxy and are
     // only here to maintain contract storage structure
     DomainManager public dm;
+    IAKAP public akap;
     uint public rootPtr;
 
     constructor() public {}
@@ -35,19 +37,19 @@ contract ForTestB {
 
     function value2() external view returns (bytes memory) {
         string memory key = "k1";
-        uint valuePtr = dm.akap().hashOf(rootPtr, key.asBytes());
-        return dm.akap().nodeBody(valuePtr);
+        uint valuePtr = akap.hashOf(rootPtr, key.asBytes());
+        return akap.nodeBody(valuePtr);
     }
 
     function action1() external {
         string memory key = "k2";
-        uint valuePtr = dm.akap().hashOf(rootPtr, key.asBytes());
+        uint valuePtr = akap.hashOf(rootPtr, key.asBytes());
 
-        if (!dm.akap().exists(valuePtr)) {
+        if (!akap.exists(valuePtr)) {
             require(dm.claim(rootPtr, key.asBytes()) > 0, "ForTestB: Unable to claim");
         }
 
         uint value = 222;
-        dm.akap().setNodeBody(valuePtr, value.asBytes());
+        akap.setNodeBody(valuePtr, value.asBytes());
     }
 }

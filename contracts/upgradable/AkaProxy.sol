@@ -14,21 +14,24 @@
 
 pragma solidity ^0.5.0;
 
+import "akap/contracts/IAKAP.sol";
 import "../domain/DomainManager.sol";
 
 contract AkaProxy {
     DomainManager public dm;
+    IAKAP public akap;
     uint public rootPtr;
 
     constructor(address _dmAddress, uint _rootPtr) public {
         dm = DomainManager(_dmAddress);
+        akap = dm.akap();
         rootPtr = _rootPtr;
 
-        require(dm.akap().exists(rootPtr), "AkaProxy: No root node");
+        require(akap.exists(rootPtr), "AkaProxy: No root node");
     }
 
     function () payable external {
-        address implementationAddress = dm.akap().seeAddress(rootPtr);
+        address implementationAddress = akap.seeAddress(rootPtr);
         require(implementationAddress != address(0), "AkaProxy: No root node address");
 
         assembly {
