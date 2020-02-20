@@ -21,4 +21,6 @@ This repository contains the AKAP utils source code. Other related repositories:
 
 `npm install akap`
 
+`npm install @openzeppelin/contracts`
+
 `npm install @openzeppelin/test-helpers`
