@@ -16,8 +16,9 @@ pragma solidity ^0.5.0;
 
 import "akap/contracts/IAKAP.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./IDomainManager.sol";
 
-contract DomainManager {
+contract DomainManager is IDomainManager {
     IAKAP public akap;
     IERC721 public erc721;
 
