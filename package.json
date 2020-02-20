@@ -1,6 +1,6 @@
 {
   "name": "akap-utils",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "AKAP utils, for all your eternal storage",
   "files": [
     "/contracts/**/*.sol"
