@@ -14,7 +14,20 @@
 
 pragma solidity ^0.5.0;
 
+import "akap/contracts/IAKAP.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
 contract IDomainManager {
+    function akap() public view returns (IAKAP);
+
+    function erc721() public view returns (IERC721);
+
+    function domainParent() public view returns (uint);
+
+    function domainLabel() public view returns (bytes memory);
+
+    function domain() public view returns (uint);
+
     function setApprovalForAll(address to, bool approved) public;
 
     function claim(bytes memory label) public returns (uint status);

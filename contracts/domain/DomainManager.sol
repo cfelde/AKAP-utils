@@ -19,49 +19,69 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IDomainManager.sol";
 
 contract DomainManager is IDomainManager {
-    IAKAP public akap;
-    IERC721 public erc721;
+    IAKAP private __akap;
+    IERC721 private __erc721;
 
-    uint public domainParent;
-    bytes public domainLabel;
+    uint private __domainParent;
+    bytes private __domainLabel;
 
-    uint public domain;
+    uint private __domain;
 
     constructor(address _akapAddress, uint _domainParent, bytes memory _domainLabel) public {
-        akap = IAKAP(_akapAddress);
-        erc721 = IERC721(_akapAddress);
+        __akap = IAKAP(_akapAddress);
+        __erc721 = IERC721(_akapAddress);
 
-        domainParent = _domainParent;
-        domainLabel = _domainLabel;
+        __domainParent = _domainParent;
+        __domainLabel = _domainLabel;
 
-        require(akap.claim(domainParent, domainLabel) > 0, "DomainManager: Unable to claim");
+        require(__akap.claim(__domainParent, __domainLabel) > 0, "DomainManager: Unable to claim");
 
-        domain = akap.hashOf(domainParent, domainLabel);
+        __domain = __akap.hashOf(__domainParent, __domainLabel);
 
-        akap.setSeeAddress(domain, address(this));
+        __akap.setSeeAddress(__domain, address(this));
 
         // DomainManager creator gets full access by default
-        erc721.setApprovalForAll(msg.sender, true);
+        __erc721.setApprovalForAll(msg.sender, true);
     }
 
     modifier onlyApproved() {
-        require(erc721.isApprovedForAll(address(this), msg.sender), "DomainManager: Not approved for all");
+        require(__erc721.isApprovedForAll(address(this), msg.sender), "DomainManager: Not approved for all");
 
         _;
+    }
+
+    function akap() public view returns (IAKAP) {
+        return __akap;
+    }
+
+    function erc721() public view returns (IERC721) {
+        return __erc721;
+    }
+
+    function domainParent() public view returns (uint) {
+        return __domainParent;
+    }
+
+    function domainLabel() public view returns (bytes memory) {
+        return __domainLabel;
+    }
+
+    function domain() public view returns (uint) {
+        return __domain;
     }
 
     function setApprovalForAll(address to, bool approved) public onlyApproved() {
         require(to != msg.sender, "DomainManager: Approve to caller");
 
-        erc721.setApprovalForAll(to, approved);
+        __erc721.setApprovalForAll(to, approved);
     }
 
     function claim(bytes memory label) public returns (uint status) {
-        return claim(domain, label);
+        return claim(__domain, label);
     }
 
     function claim(uint parentId, bytes memory label) public onlyApproved() returns (uint) {
-        uint status = akap.claim(parentId, label);
+        uint status = __akap.claim(parentId, label);
 
         require(status > 0, "DomainManager: Unable to claim");
 
@@ -69,7 +89,7 @@ contract DomainManager is IDomainManager {
     }
 
     function reclaim() public returns (uint) {
-        uint status = akap.claim(domainParent, domainLabel);
+        uint status = __akap.claim(__domainParent, __domainLabel);
 
         require(status > 0, "DomainManager: Unable to reclaim");
 

@@ -15,15 +15,15 @@
 pragma solidity ^0.5.0;
 
 import "akap/contracts/IAKAP.sol";
-import "../domain/DomainManager.sol";
+import "../domain/IDomainManager.sol";
 
 contract AkaProxy {
-    DomainManager public dm;
+    IDomainManager public dm;
     IAKAP public akap;
     uint public rootPtr;
 
     constructor(address _dmAddress, uint _rootPtr) public {
-        dm = DomainManager(_dmAddress);
+        dm = IDomainManager(_dmAddress);
         akap = dm.akap();
         rootPtr = _rootPtr;
 
