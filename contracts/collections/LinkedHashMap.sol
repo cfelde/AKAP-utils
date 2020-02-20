@@ -17,8 +17,9 @@ pragma solidity ^0.5.0;
 import "../domain/DomainManager.sol";
 import "akap/contracts/IAKAP.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./ILinkedHashMap.sol";
 
-contract LinkedHashMap {
+contract LinkedHashMap is ILinkedHashMap {
     DomainManager public dm;
     IAKAP public akap;
     IERC721 public erc721;
