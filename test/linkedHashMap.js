@@ -323,7 +323,7 @@ contract("When using a linked hash map:", async accounts => {
         // Approve accounts[1]
         await dm.setApprovalForAll(accounts[1], true);
 
-        await mapInstance.put(await cu.sToBytes("key4"), await cu.sToBytes("value E"), {from: accounts[1]})
+        await mapInstance.put(await cu.sToBytes("key4"), await cu.sToBytes("value E"), {from: accounts[1]});
         assert.isTrue(await mapInstance.exists(await cu.sToBytes("key4")));
 
         mapInstance.remove(await cu.sToBytes("key4"), {from: accounts[1]});
